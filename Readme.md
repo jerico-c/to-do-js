@@ -2,7 +2,7 @@
 
 A minimalist, single-file to-do list application built with HTML, CSS, and plain ("vanilla") JavaScript. This project is designed as a perfect starting point for beginners to understand the fundamentals of DOM manipulation and event handling in JavaScript.
 
-![To-Do List App Screenshot](https://i.imgur.com/uFGMgMv.png)
+![To-Do List App Screenshot](Screen Shot.png)
 
 
 ---
