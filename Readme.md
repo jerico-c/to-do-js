@@ -39,7 +39,7 @@ No installation or build steps are required!
 
 This simple application is a great foundation. Here are some potential features to add next:
 
-* [ ] **Local Storage Persistence**: Save tasks in the browser's local storage so they don't disappear when the page is refreshed.
+* [x] **Local Storage Persistence**: Save tasks in the browser's local storage so they don't disappear when the page is refreshed.
 * [ ] **Edit Functionality**: Add an "Edit" button to allow users to modify existing tasks.
 * [ ] **Task Filtering**: Implement buttons to filter the view between "All," "Active," and "Completed" tasks.
 * [ ] **Due Dates & Priorities**: Allow users to add a due date or a priority level to each task.
