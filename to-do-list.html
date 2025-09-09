@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple To-Do List</title>
     <style>
-        /* --- CSS is the same as before --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f4f4f9;
@@ -36,7 +35,7 @@
             margin-bottom: 1rem;
         }
 
-        #task-input {
+        #task-input, .edit-input { /* NEW: Style for the edit input field */
             flex-grow: 1;
             padding: 10px;
             border: 1px solid #ddd;
@@ -70,27 +69,44 @@
             padding: 12px;
             background: #f9f9f9;
             border-bottom: 1px solid #eee;
-            cursor: pointer;
+        }
+        
+        li span { /* NEW: Added cursor pointer to the text span */
+             cursor: pointer;
         }
 
         li:last-child {
             border-bottom: none;
         }
 
-        li.completed {
+        li.completed span { /* NEW: Target the span inside a completed li */
             text-decoration: line-through;
             color: #888;
         }
+        
+        .task-buttons { /* NEW: Container for buttons */
+            display: flex;
+            gap: 5px;
+        }
 
-        .delete-btn {
-            background: #dc3545;
-            color: white;
+        .edit-btn, .delete-btn { /* NEW: Shared button styles */
             border: none;
             padding: 5px 10px;
             border-radius: 4px;
             cursor: pointer;
+            color: white;
         }
 
+        .edit-btn { /* NEW: Edit button specific color */
+            background: #ffc107;
+        }
+        .edit-btn:hover {
+            background: #e0a800;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+        }
         .delete-btn:hover {
             background: #c82333;
         }
@@ -99,7 +115,7 @@
 <body>
 
     <div id="app-container">
-        <h1>My To-Do List ✅</h1>
+        <h1>My To-Do List 📝</h1>
         <form id="task-form">
             <input type="text" id="task-input" placeholder="Add a new task..." autocomplete="off">
             <button type="submit" id="add-task-btn">Add</button>
@@ -109,98 +125,127 @@
     </div>
 
     <script>
-        // --- JavaScript Logic with Local Storage --- //
+        // --- JavaScript Logic with Edit Functionality --- //
 
-        // 1. Get references to the essential HTML elements
         const taskForm = document.getElementById('task-form');
         const taskInput = document.getElementById('task-input');
         const taskList = document.getElementById('task-list');
 
-        // NEW: Load tasks from local storage when the page loads
         document.addEventListener('DOMContentLoaded', loadTasks);
-
-        // 2. Add an event listener to the form to handle submission
         taskForm.addEventListener('submit', function(event) {
             event.preventDefault();
             const taskText = taskInput.value.trim();
-
             if (taskText !== '') {
                 addTask(taskText);
                 taskInput.value = '';
                 taskInput.focus();
-                // NEW: Save the updated list to local storage
                 saveTasks();
             }
         });
 
-        // 3. Create a function to add a new task to the list
-        // NEW: The function now accepts the completion status as an argument
         function addTask(text, isCompleted = false) {
             const li = document.createElement('li');
             const taskTextSpan = document.createElement('span');
             taskTextSpan.textContent = text;
+            
+            // NEW: Create a container for the buttons
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.className = 'task-buttons';
+
+            // NEW: Create the Edit button
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'edit-btn';
 
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = 'Delete';
             deleteBtn.className = 'delete-btn';
 
-            // NEW: If the task was loaded as 'completed', add the class
             if (isCompleted) {
                 li.classList.add('completed');
             }
 
+            // NEW: Append buttons to their container, and container to the li
+            buttonsDiv.appendChild(editBtn);
+            buttonsDiv.appendChild(deleteBtn);
             li.appendChild(taskTextSpan);
-            li.appendChild(deleteBtn);
+            li.appendChild(buttonsDiv);
+
             taskList.appendChild(li);
         }
 
-        // 4. Add an event listener to the whole list to handle clicks
         taskList.addEventListener('click', function(event) {
             const clickedElement = event.target;
+            const taskItem = clickedElement.closest('li'); // NEW: Find the closest li parent
 
-            if (clickedElement.classList.contains('delete-btn')) {
-                const taskItem = clickedElement.parentElement;
+            if (!taskItem) return; // Exit if the click was not inside an li
+
+            // NEW: Logic for the Edit/Save button
+            if (clickedElement.classList.contains('edit-btn')) {
+                const isEditing = taskItem.classList.contains('editing');
+                
+                if (isEditing) {
+                    // --- Currently in Edit Mode (Save logic) ---
+                    const editInput = taskItem.querySelector('.edit-input');
+                    const newText = editInput.value.trim();
+                    
+                    if (newText) {
+                        const newSpan = document.createElement('span');
+                        newSpan.textContent = newText;
+                        taskItem.replaceChild(newSpan, editInput); // Replace input with new span
+                        clickedElement.textContent = 'Edit'; // Change button text back to Edit
+                        saveTasks();
+                    }
+                } else {
+                    // --- Not in Edit Mode (Edit logic) ---
+                    const taskTextSpan = taskItem.querySelector('span');
+                    const currentText = taskTextSpan.textContent;
+
+                    const editInput = document.createElement('input');
+                    editInput.type = 'text';
+                    editInput.value = currentText;
+                    editInput.className = 'edit-input';
+
+                    taskItem.replaceChild(editInput, taskTextSpan); // Replace span with input
+                    editInput.focus(); // Automatically focus the input field
+                    clickedElement.textContent = 'Save'; // Change button text to Save
+                }
+                
+                taskItem.classList.toggle('editing'); // Toggle the editing state
+            
+            } else if (clickedElement.classList.contains('delete-btn')) {
                 taskList.removeChild(taskItem);
+                saveTasks();
             } else if (clickedElement.tagName === 'SPAN') {
-                const taskItem = clickedElement.parentElement;
                 taskItem.classList.toggle('completed');
+                saveTasks();
             }
-
-            // NEW: Save the updated list after any change (delete or toggle)
-            saveTasks();
         });
 
-        // NEW: 5. Function to save all tasks to local storage
         function saveTasks() {
             const tasks = [];
-            // Select all list items in the task list
             const taskItems = document.querySelectorAll('#task-list li');
 
-            // Loop through each list item to create a task object
             taskItems.forEach(item => {
-                const taskText = item.querySelector('span').textContent;
-                const isCompleted = item.classList.contains('completed');
-                tasks.push({ text: taskText, completed: isCompleted });
+                // NEW: Ensure we don't save a task while it's being edited
+                if (item.classList.contains('editing')) {
+                    const taskText = item.querySelector('.edit-input').value;
+                    tasks.push({ text: taskText, completed: false }); // Assume not completed during edit
+                } else {
+                    const taskText = item.querySelector('span').textContent;
+                    const isCompleted = item.classList.contains('completed');
+                    tasks.push({ text: taskText, completed: isCompleted });
+                }
             });
 
-            // Convert the array of objects to a JSON string and save it
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
 
-        // NEW: 6. Function to load tasks from local storage
         function loadTasks() {
-            // Get the tasks string from local storage
             const savedTasks = localStorage.getItem('tasks');
+            if (!savedTasks) return;
 
-            // If there are no saved tasks, do nothing
-            if (!savedTasks) {
-                return;
-            }
-
-            // Parse the JSON string back into an array of objects
             const tasks = JSON.parse(savedTasks);
-
-            // Create and add a list item for each task object
             tasks.forEach(task => {
                 addTask(task.text, task.completed);
             });
