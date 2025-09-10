@@ -29,13 +29,42 @@
             text-align: center;
         }
 
+        /* NEW: Filter button styles */
+        #filter-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        .filter-btn {
+            border: 1px solid transparent;
+            background: none;
+            color: #007bff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            background-color: #f4f4f9;
+        }
+
+        .filter-btn.active {
+            background-color: #007bff;
+            color: white;
+        }
+
         #task-form {
             display: flex;
             gap: 10px;
             margin-bottom: 1rem;
         }
 
-        #task-input, .edit-input { /* NEW: Style for the edit input field */
+        #task-input, .edit-input {
             flex-grow: 1;
             padding: 10px;
             border: 1px solid #ddd;
@@ -53,10 +82,6 @@
             font-size: 1rem;
         }
 
-        #add-task-btn:hover {
-            background-color: #0056b3;
-        }
-
         ul {
             list-style-type: none;
             padding: 0;
@@ -71,25 +96,21 @@
             border-bottom: 1px solid #eee;
         }
         
-        li span { /* NEW: Added cursor pointer to the text span */
+        li span {
              cursor: pointer;
         }
 
-        li:last-child {
-            border-bottom: none;
-        }
-
-        li.completed span { /* NEW: Target the span inside a completed li */
+        li.completed span {
             text-decoration: line-through;
             color: #888;
         }
         
-        .task-buttons { /* NEW: Container for buttons */
+        .task-buttons {
             display: flex;
             gap: 5px;
         }
 
-        .edit-btn, .delete-btn { /* NEW: Shared button styles */
+        .edit-btn, .delete-btn {
             border: none;
             padding: 5px 10px;
             border-radius: 4px;
@@ -97,25 +118,26 @@
             color: white;
         }
 
-        .edit-btn { /* NEW: Edit button specific color */
+        .edit-btn {
             background: #ffc107;
-        }
-        .edit-btn:hover {
-            background: #e0a800;
         }
         
         .delete-btn {
             background: #dc3545;
-        }
-        .delete-btn:hover {
-            background: #c82333;
         }
     </style>
 </head>
 <body>
 
     <div id="app-container">
-        <h1>My To-Do List 📝</h1>
+        <h1>My To-Do List 🚀</h1>
+        
+        <div id="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+
         <form id="task-form">
             <input type="text" id="task-input" placeholder="Add a new task..." autocomplete="off">
             <button type="submit" id="add-task-btn">Add</button>
@@ -125,11 +147,10 @@
     </div>
 
     <script>
-        // --- JavaScript Logic with Edit Functionality --- //
-
         const taskForm = document.getElementById('task-form');
         const taskInput = document.getElementById('task-input');
         const taskList = document.getElementById('task-list');
+        const filterButtonsContainer = document.getElementById('filter-buttons'); // NEW: Get filter container
 
         document.addEventListener('DOMContentLoaded', loadTasks);
         taskForm.addEventListener('submit', function(event) {
@@ -143,16 +164,25 @@
             }
         });
 
+        // NEW: Event listener for the filter buttons
+        filterButtonsContainer.addEventListener('click', function(event) {
+            if (event.target.classList.contains('filter-btn')) {
+                // Remove 'active' class from all filter buttons
+                filterButtonsContainer.querySelector('.active').classList.remove('active');
+                // Add 'active' class to the clicked button
+                event.target.classList.add('active');
+                filterTasks(); // Call the filter function
+            }
+        });
+
         function addTask(text, isCompleted = false) {
             const li = document.createElement('li');
             const taskTextSpan = document.createElement('span');
             taskTextSpan.textContent = text;
             
-            // NEW: Create a container for the buttons
             const buttonsDiv = document.createElement('div');
             buttonsDiv.className = 'task-buttons';
 
-            // NEW: Create the Edit button
             const editBtn = document.createElement('button');
             editBtn.textContent = 'Edit';
             editBtn.className = 'edit-btn';
@@ -165,53 +195,43 @@
                 li.classList.add('completed');
             }
 
-            // NEW: Append buttons to their container, and container to the li
             buttonsDiv.appendChild(editBtn);
             buttonsDiv.appendChild(deleteBtn);
             li.appendChild(taskTextSpan);
             li.appendChild(buttonsDiv);
-
             taskList.appendChild(li);
         }
 
         taskList.addEventListener('click', function(event) {
             const clickedElement = event.target;
-            const taskItem = clickedElement.closest('li'); // NEW: Find the closest li parent
+            const taskItem = clickedElement.closest('li');
 
-            if (!taskItem) return; // Exit if the click was not inside an li
+            if (!taskItem) return;
 
-            // NEW: Logic for the Edit/Save button
             if (clickedElement.classList.contains('edit-btn')) {
-                const isEditing = taskItem.classList.contains('editing');
-                
+                // ... (Edit/Save logic is unchanged)
+                 const isEditing = taskItem.classList.contains('editing');
                 if (isEditing) {
-                    // --- Currently in Edit Mode (Save logic) ---
                     const editInput = taskItem.querySelector('.edit-input');
                     const newText = editInput.value.trim();
-                    
                     if (newText) {
                         const newSpan = document.createElement('span');
                         newSpan.textContent = newText;
-                        taskItem.replaceChild(newSpan, editInput); // Replace input with new span
-                        clickedElement.textContent = 'Edit'; // Change button text back to Edit
+                        taskItem.replaceChild(newSpan, editInput);
+                        clickedElement.textContent = 'Edit';
                         saveTasks();
                     }
                 } else {
-                    // --- Not in Edit Mode (Edit logic) ---
                     const taskTextSpan = taskItem.querySelector('span');
-                    const currentText = taskTextSpan.textContent;
-
                     const editInput = document.createElement('input');
                     editInput.type = 'text';
-                    editInput.value = currentText;
+                    editInput.value = taskTextSpan.textContent;
                     editInput.className = 'edit-input';
-
-                    taskItem.replaceChild(editInput, taskTextSpan); // Replace span with input
-                    editInput.focus(); // Automatically focus the input field
-                    clickedElement.textContent = 'Save'; // Change button text to Save
+                    taskItem.replaceChild(editInput, taskTextSpan);
+                    editInput.focus();
+                    clickedElement.textContent = 'Save';
                 }
-                
-                taskItem.classList.toggle('editing'); // Toggle the editing state
+                taskItem.classList.toggle('editing');
             
             } else if (clickedElement.classList.contains('delete-btn')) {
                 taskList.removeChild(taskItem);
@@ -219,36 +239,54 @@
             } else if (clickedElement.tagName === 'SPAN') {
                 taskItem.classList.toggle('completed');
                 saveTasks();
+                filterTasks(); // NEW: Re-filter tasks after toggling completion
             }
         });
 
-        function saveTasks() {
-            const tasks = [];
-            const taskItems = document.querySelectorAll('#task-list li');
+        // NEW: Function to filter tasks based on the active button
+        function filterTasks() {
+            const taskItems = taskList.querySelectorAll('li');
+            const activeFilter = filterButtonsContainer.querySelector('.active').dataset.filter;
 
             taskItems.forEach(item => {
-                // NEW: Ensure we don't save a task while it's being edited
+                const isCompleted = item.classList.contains('completed');
+                switch (activeFilter) {
+                    case 'active':
+                        item.style.display = isCompleted ? 'none' : 'flex';
+                        break;
+                    case 'completed':
+                        item.style.display = isCompleted ? 'flex' : 'none';
+                        break;
+                    default: // 'all'
+                        item.style.display = 'flex';
+                        break;
+                }
+            });
+        }
+
+        function saveTasks() {
+            // ... (saveTasks function is unchanged)
+            const tasks = [];
+            const taskItems = document.querySelectorAll('#task-list li');
+            taskItems.forEach(item => {
                 if (item.classList.contains('editing')) {
                     const taskText = item.querySelector('.edit-input').value;
-                    tasks.push({ text: taskText, completed: false }); // Assume not completed during edit
+                    tasks.push({ text: taskText, completed: false });
                 } else {
                     const taskText = item.querySelector('span').textContent;
                     const isCompleted = item.classList.contains('completed');
                     tasks.push({ text: taskText, completed: isCompleted });
                 }
             });
-
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
 
         function loadTasks() {
+             // ... (loadTasks function is unchanged)
             const savedTasks = localStorage.getItem('tasks');
             if (!savedTasks) return;
-
             const tasks = JSON.parse(savedTasks);
-            tasks.forEach(task => {
-                addTask(task.text, task.completed);
-            });
+            tasks.forEach(task => addTask(task.text, task.completed));
         }
     </script>
 </body>
