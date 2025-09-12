@@ -42,7 +42,7 @@ This simple application is a great foundation. Here are some potential features 
 * [x] **Local Storage Persistence**: Save tasks in the browser's local storage so they don't disappear when the page is refreshed.
 * [x] **Edit Functionality**: Add an "Edit" button to allow users to modify existing tasks.
 * [x] **Task Filtering**: Implement buttons to filter the view between "All," "Active," and "Completed" tasks.
-* [ ] **Due Dates & Priorities**: Allow users to add a due date or a priority level to each task.
+* [x] **Due Dates & Priorities**: Allow users to add a due date or a priority level to each task.
 * [ ] **Modular Codebase**: Split the CSS and JavaScript into separate files (`style.css`, `script.js`) for better organization as the project grows.
 * [ ] **Improved UI/UX**: Add subtle animations for adding and deleting tasks to make the user experience smoother.
 
